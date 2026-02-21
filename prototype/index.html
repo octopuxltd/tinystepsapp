@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tiny Steps – prototype</title>
+  <style>
+    :root {
+      --bg: #f8f6f3;
+      --surface: #fff;
+      --text: #2d2a26;
+      --muted: #6b6560;
+      --fg: #2d2a26;
+      --accent: #2d7d4a;
+      --accent-soft: #e8f0ea;
+      --border: #e5e2de;
+    }
+    body[data-theme="0"] { --bg: #f5f3ef; --surface: #fff; --text: #2d2a26; --muted: #6b6560; --fg: #0f7b42; --accent: #0f7b42; --accent-soft: #c8e6d4; --border: #e5e2de; }
+    body[data-theme="1"] { --bg: #f3eef9; --surface: #fff; --text: #2d2a36; --muted: #6b6575; --fg: #b82d5c; --accent: #b82d5c; --accent-soft: #f8d6e4; --border: #e8e2f0; }
+    body[data-theme="2"] { --bg: #e8f4f6; --surface: #fff; --text: #1e2d35; --muted: #5c6b73; --fg: #067378; --accent: #067378; --accent-soft: #b8e8ea; --border: #dce8ea; }
+    body[data-theme="3"] { --bg: #fef2eb; --surface: #fff; --text: #2d2620; --muted: #6b6058; --fg: #d65a2e; --accent: #d65a2e; --accent-soft: #fad9c8; --border: #f0e6de; }
+    body[data-theme="4"] { --bg: #e8eef6; --surface: #fff; --text: #252d38; --muted: #5c6573; --fg: #2d5a8c; --accent: #2d5a8c; --accent-soft: #c9d9f0; --border: #dce2ec; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      min-height: 100vh;
+      padding: 1.5rem;
+      line-height: 1.55;
+    }
+    .container { max-width: 28rem; margin: 0 auto; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-top: 2rem;
+      margin-bottom: 0;
+      padding-top: 0.25rem;
+    }
+    header .header-brand {
+      font-size: 0.75rem;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      opacity: 0.3;
+      color: var(--text);
+      text-align: right;
+      margin-left: auto;
+    }
+    h1 { font-size: 1.5rem; margin: 0 0 0.5rem 0; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .task-complete-next { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.95rem; }
+    .task-complete-next strong { color: var(--fg); }
+    .task-complete-actions { margin-top: 1.5rem; }
+    .task-complete-screen { text-align: center; }
+    .task-complete-inner { max-width: 28rem; margin: 0 auto; text-align: center; }
+    .task-complete-heading { font-size: 1.5rem; margin: 0 0 1.5rem 0; }
+    .task-complete-badge { display: block; width: fit-content; margin-left: auto; margin-right: auto; margin-bottom: 1.5rem; color: var(--accent); }
+    .task-complete-badge svg { display: block; }
+    .task-complete-title { font-size: 1.5rem; font-weight: 600; color: var(--fg); margin: 0 0 0.25rem 0; }
+    .task-complete-title::before { content: '\201C'; }
+    .task-complete-title::after { content: '\201D'; }
+    .task-complete-label { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.12em; color: var(--muted); margin: 0 0 1rem 0; text-transform: uppercase; opacity: 0.9; }
+    .task-complete-divider { border-top: 1px solid var(--border); margin: 1rem 0 1rem 0; }
+    .task-complete-task-row { margin-bottom: 1rem; }
+    .task-complete-screen .task-complete-next { border-top: none; padding-top: 0; }
+    .task-complete-task-row .chunk-task-title { text-align: left; }
+    .btn-task-complete-check-wrap.btn-task-complete-checked::before { opacity: 1; }
+    .task-complete-screen .btn-task-complete-check-wrap.btn-task-complete-checked::before { opacity: 0; }
+    .task-complete-screen .btn-task-complete { cursor: default; }
+    .task-complete-actions .task-complete-btn {
+      width: 100%;
+      border-radius: 9999px;
+      padding: 1.1rem 0 !important;
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+    label { display: block; margin-bottom: 0.25rem; font-weight: 500; color: var(--muted); font-size: 0.9rem; }
+    textarea {
+      width: 100%;
+      min-height: 6rem;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: inherit;
+      resize: vertical;
+      margin-bottom: 1rem;
+    }
+    .energy {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      width: 100%;
+    }
+    .energy button {
+      flex: 1;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    .energy button.selected { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+    .chunk-task-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.5rem; }
+    .chunk-task-title {
+      font-size: 1.3125rem;
+      font-weight: 400;
+      line-height: 1.2;
+      color: var(--fg);
+      margin: 0;
+      flex: 1;
+      min-width: 0;
+    }
+    .btn-task-complete { display: inline-flex; flex-direction: row; align-items: center; gap: 1rem; margin: 0; padding-right: 0 !important; flex-shrink: 0; background: transparent !important; border: 1px solid transparent !important; cursor: default; }
+    .btn-task-complete-check-wrap { position: relative; flex-shrink: 0; width: 1.5rem; height: 1.5rem; margin-left: auto; }
+    .btn-task-complete-check-wrap::before { content: '\2713'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1rem; opacity: 0; pointer-events: none; color: var(--text); }
+    .btn-task-complete:hover .btn-task-complete-check-wrap::before { opacity: 0.3; }
+    .btn-task-complete.completed-clicked:hover .btn-task-complete-check-wrap::before,
+    .btn-task-complete:hover .btn-task-complete-check-wrap.btn-task-complete-checked::before { opacity: 0; }
+    .btn-task-complete input[type="checkbox"] { margin: 0; pointer-events: none; width: 1.5rem; height: 1.5rem; display: block; }
+    .btn-task-complete .btn-task-complete-label { text-align: left; font-size: 0.9rem; font-weight: 400; letter-spacing: 0.12em; color: var(--text); }
+    .chunk-card {
+      background: transparent;
+      padding: 1.5rem 0;
+      border: none;
+      border-top: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+    .chunk-step-heading { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem; font-weight: 500; color: var(--muted); margin: 0 0 0.5rem 0; opacity: 0.9; }
+    #chunk-step-label { font-size: 0.9rem; font-weight: 400; letter-spacing: 0.12em; opacity: 0.3; color: var(--text); }
+    .chunk-step-heading-right { display: flex; align-items: center; gap: 0.35rem; margin-left: auto; color: var(--text); opacity: 0.3; }
+    .chunk-step-heading .btn { padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 6px; border: 1px solid var(--text); background: transparent; color: var(--text); cursor: pointer; opacity: 1; }
+    .chunk-step-heading .btn:hover:not(:disabled) { background: rgba(0,0,0,0.08); }
+    .chunk-step-heading .btn:disabled { cursor: default; }
+    .chunk-text { font-size: 2.625rem; font-weight: 700; line-height: 1.3; margin: 2.5rem 0 1.25rem 0; min-height: 150px; text-align: center; opacity: 0.8; color: var(--fg); }
+    .chunk-text-hint { font-size: 0.9rem; color: var(--muted); margin: -0.5rem 0 0 0; font-weight: 400; }
+    .chunk-actions-wrap { position: relative; margin-top: 1rem; }
+    .step-done-hint {
+      position: absolute;
+      left: 50%;
+      bottom: 100%;
+      margin: 0 0 6px 0;
+      transform: translateX(-50%) rotate(6deg);
+      font-size: 0.75rem;
+      color: var(--muted);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .step-done-hint-arrow {
+      display: block;
+      margin: 4px auto 0;
+      width: 24px;
+      height: 34px;
+    }
+    .step-done-hint-arrow svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      stroke: var(--muted);
+      fill: none;
+      opacity: 0.85;
+    }
+    .actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem; align-items: center; }
+    #btn-next-step {
+      width: 100%;
+      border-radius: 9999px;
+      padding: 1.1rem 0 !important;
+      font-size: 1.35rem;
+      font-weight: bold;
+      background: linear-gradient(90deg, #e63946, #f4a261, #e9c46a, #2a9d8f, #457b9d, #6a4c93, #9b5de5);
+      color: rgba(0, 0, 0, 0.9);
+      transition: transform 0.2s ease;
+    }
+    #btn-next-step:not(.is-complete-task):hover { transform: scale(1.03); }
+    #btn-next-step.is-complete-task:hover {
+      animation: done-btn-wobble 1s ease-in-out infinite;
+      transition: none;
+    }
+    @keyframes done-btn-wobble {
+      0%, 100% { transform: scale(1.02) rotate(0deg) translateX(0); }
+      25% { transform: scale(1.08) rotate(-1.5deg) translateX(-1px); }
+      50% { transform: scale(0.98) rotate(1.5deg) translateX(1px); }
+      75% { transform: scale(1.08) rotate(-1.5deg) translateX(-1px); }
+    }
+    #btn-first-step {
+      width: 100%;
+      border-radius: 9999px;
+      padding: 1.1rem 0 !important;
+      font-size: 1.35rem;
+      font-weight: bold;
+      background: linear-gradient(90deg, #e63946, #f4a261, #e9c46a, #2a9d8f, #457b9d, #6a4c93, #9b5de5);
+      color: #fff;
+      transition: transform 0.2s ease;
+    }
+    #btn-first-step:hover { transform: scale(1.03); }
+    .btn {
+      padding: 0.65rem 1.25rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost { background: transparent; color: var(--muted); }
+    .reward {
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      font-weight: 500;
+    }
+    .no-more { margin: 1.5rem 0; color: var(--muted); }
+    .no-more a { color: var(--accent); }
+    .wins-list { padding-left: 1.5em; margin: 0; }
+    .wins-list li { padding: 0.35rem 0; border-bottom: 1px solid var(--border); }
+    .wins-list li:last-child { border-bottom: none; }
+    .back-link { display: inline-block; margin-top: 0; color: var(--accent); text-decoration: none; font-size: 0.75rem; }
+    .back-link:hover .back-link-text { text-decoration: underline; }
+    .debug-section {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      opacity: 0.9;
+      color: var(--text);
+    }
+    .debug-section-toggle-wrap { display: inline-block; opacity: 0.3; margin-bottom: 0.5rem; }
+    .debug-table-toggle {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      border-radius: 6px;
+      border: 1px solid var(--text);
+      background: transparent;
+      color: var(--text);
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .debug-table-toggle:hover { background: rgba(0, 0, 0, 0.08); text-decoration: none; }
+    .tree-debug {
+      font-size: 0.7rem;
+      font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Monaco, Consolas, monospace;
+      color: var(--muted);
+    }
+    .tree-debug .tree-title { font-weight: 600; margin-bottom: 0.35rem; }
+    .tree-table { width: 100%; border-collapse: collapse; font-size: inherit; }
+    .tree-table th, .tree-table td { padding: 0.2rem 0.4rem; text-align: left; vertical-align: top; border: 1px solid var(--border); white-space: pre-line; }
+    .tree-table th { font-weight: 600; border-bottom: 2px solid var(--border); }
+    .tree-table .tree-cell-a { min-width: 5rem; }
+    .tree-table .tree-cell-b { min-width: 5rem; }
+    .tree-table .tree-cell-c { min-width: 8rem; }
+    .tree-table .tree-cell-d { min-width: 6rem; }
+    .tree-table .tree-current { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+    .debug-task-menu { position: fixed; bottom: 0; right: 0; z-index: 100; margin: 0; padding: 0.5rem 0.75rem; background: var(--bg); border-left: 1px solid var(--border); border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--muted); }
+    .debug-task-menu a { display: block; margin-bottom: 0.25rem; color: var(--accent); text-decoration: none; }
+    .debug-task-menu a:hover { text-decoration: none; }
+    .debug-task-menu a:hover .task-title { text-decoration: underline; }
+    .debug-task-menu a:last-child { margin-bottom: 0; }
+    .debug-reset-btn { display: block; margin-top: 0.5rem; padding: 0.25rem 0; font-size: 0.8rem; color: var(--accent); background: none; border: none; cursor: pointer; text-align: left; }
+    .debug-reset-btn:hover { text-decoration: underline; }
+    .confetti-wrap { position: fixed; inset: 0; z-index: 1000; pointer-events: none; overflow: hidden; }
+    .confetti-piece { position: absolute; width: 10px; height: 10px; opacity: 0.9; transform: translate(-50%, -50%); will-change: transform; }
+    .hearts-wrap { position: fixed; inset: 0; z-index: 1000; pointer-events: none; overflow: hidden; }
+    .heart-piece { position: absolute; font-size: 1rem; line-height: 1; transform: translate(-50%, -50%); will-change: transform; opacity: 0.95; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- List screen -->
+    <section id="list-screen" class="screen active">
+      <h1>What do you need to get done?</h1>
+      <p style="color: var(--muted); margin-bottom: 1rem;">We'll break it into tiny steps to help you get there!</p>
+      <form id="list-form">
+        <textarea id="list-input" placeholder="e.g. do laundry, eat something" required></textarea>
+        <label>How’s your energy today?</label>
+        <div class="energy" id="energy-btns" role="group">
+          <button type="button" data-energy="1">1</button>
+          <button type="button" data-energy="2">2</button>
+          <button type="button" data-energy="3">3</button>
+          <button type="button" data-energy="4">4</button>
+          <button type="button" data-energy="5">5</button>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-first-step">Go to first step</button>
+      </form>
+    </section>
+
+    <!-- Chunk screen -->
+    <section id="chunk-screen" class="screen">
+      <div id="debug-task-menu" class="debug-task-menu" aria-hidden="true"></div>
+      <div class="chunk-task-row">
+        <p class="chunk-task-title" id="chunk-task-title"></p>
+        <button type="button" class="btn btn-secondary btn-task-complete" id="btn-task-complete">
+          <span class="btn-task-complete-label">Completed?</span>
+          <span class="btn-task-complete-check-wrap">
+            <input type="checkbox" id="task-complete-checkbox" tabindex="-1" aria-hidden="true">
+          </span>
+        </button>
+      </div>
+      <div class="chunk-card">
+        <div class="chunk-step-heading">
+          <span id="chunk-step-label">Step 1</span>
+          <span class="chunk-step-heading-right">
+            <button type="button" class="btn" id="btn-smaller">Smaller steps</button>
+            <button type="button" class="btn" id="btn-bigger">Bigger steps</button>
+          </span>
+        </div>
+        <p class="chunk-text" id="chunk-text"></p>
+        <p class="chunk-text-hint" id="chunk-text-hint" style="display: none;">Do it in one step if you can!</p>
+        <div class="chunk-actions-wrap">
+          <p class="step-done-hint" id="step-done-hint" style="display: none;" aria-hidden="true">Click here once you've done it!<span class="step-done-hint-arrow"><svg viewBox="0 0 24 34" xmlns="http://www.w3.org/2000/svg"><path d="M12 0 Q6 14 12 26" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M9 23 L12 30 L15 23" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span></p>
+          <div class="actions">
+            <button type="button" class="btn btn-primary" id="btn-next-step">I did it!</button>
+          </div>
+        </div>
+      </div>
+      <div id="reward-box" class="reward" style="display: none;"></div>
+      <div id="no-more-box" class="no-more" style="display: none;">
+        No more steps for now. <a href="#" id="link-wins">See today’s wins</a> or <a href="#" id="link-new-list">start a new list</a>.
+      </div>
+      <header>
+        <a href="#" class="back-link" id="back-to-list">← <span class="back-link-text">Home</span></a>
+        <span class="header-brand">TinyStepsApp.com</span>
+      </header>
+      <div class="debug-section">
+        <span class="debug-section-toggle-wrap"><a href="#" id="debug-table-toggle" class="debug-table-toggle">Show debug table</a></span>
+        <div id="tree-debug" class="tree-debug" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <!-- Task complete success -->
+    <section id="task-complete-screen" class="screen task-complete-screen">
+      <div class="task-complete-inner">
+        <div class="task-complete-task-row chunk-task-row">
+          <p class="chunk-task-title" id="task-complete-task-title"></p>
+          <button type="button" class="btn btn-secondary btn-task-complete" disabled aria-label="Completed">
+            <span class="btn-task-complete-label">Completed?</span>
+            <span class="btn-task-complete-check-wrap btn-task-complete-checked">
+              <input type="checkbox" id="task-complete-screen-checkbox" checked disabled aria-hidden="true">
+            </span>
+          </button>
+        </div>
+        <div class="task-complete-divider"></div>
+        <h1 class="task-complete-heading">Well done!</h1>
+        <div class="task-complete-badge" aria-hidden="true">
+          <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="40" cy="40" r="38" stroke="currentColor" stroke-width="2" fill="none" opacity="0.3"/>
+            <circle cx="40" cy="40" r="32" stroke="currentColor" stroke-width="2" fill="none"/>
+            <path d="M24 40 L34 50 L56 28" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+        </div>
+        <p class="task-complete-title" id="task-complete-title"></p>
+        <p class="task-complete-label">Task completed</p>
+        <p id="task-complete-all-done" class="task-complete-next" style="display: none;">You're all done for now.</p>
+        <div class="task-complete-actions">
+          <button type="button" class="btn btn-primary task-complete-btn" id="btn-next-task" style="display: none;"></button>
+          <button type="button" class="btn btn-primary task-complete-btn" id="btn-task-complete-wins" style="display: none;">See today's wins</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Today's wins -->
+    <section id="wins-screen" class="screen">
+      <h1>Today’s wins</h1>
+      <p id="wins-count" style="color: var(--muted); margin-bottom: 1rem;"></p>
+      <ul class="wins-list" id="wins-list"></ul>
+      <a href="#" class="back-link" id="back-from-wins">Back</a>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+  const STORAGE_KEY = 'tinysteps_prototype_completed';
+  const LIST_KEY = 'tinysteps_prototype_list';
+  const STEP_HINT_SEEN_KEY = 'tinysteps_prototype_step_hint_seen';
+
+  function node(label, children) {
+    return { label: label, children: children || [] };
+  }
+
+  var TASKS = [
+    { title: 'Drink a glass of water', root: node('Drink a glass of water', [
+      node('Get a glass', [
+        node('Open the cupboard'),
+        node('Take one glass out'),
+      ]),
+      node('Fill the glass', [
+        node('Turn on the tap'),
+        node('Hold the glass under the tap'),
+        node('Turn off the tap when the glass is full enough'),
+      ]),
+      node('Drink the water', [
+        node('Take your first sip'),
+        node('Drink as much of the water as you can'),
+      ]),
+    ])},
+    { title: 'Brush my teeth', root: node('Brush my teeth', [
+      node('Get my toothbrush', [
+        node('Open the bathroom cabinet'),
+        node('Take my toothbrush out'),
+      ]),
+      node('Put toothpaste on', [
+        node('Pick up the toothpaste'),
+        node('Open the cap'),
+        node('Put a little toothpaste on my toothbrush'),
+      ]),
+      node('Brush my teeth', [
+        node('Brush my teeth (even a little counts)'),
+      ]),
+    ])},
+    { title: 'Tidy the kitchen counter', root: node('Tidy the kitchen counter', [
+      node('Pick up one thing from the counter', [
+        node('Look at one thing on the counter'),
+        node('Pick up that item'),
+        node('Put the item away somewhere that works for you'),
+      ]),
+    ])},
+    { title: 'Eat something', root: node('Eat something', [
+      node('Get something to eat', [
+        node('Go to the fridge or cupboard'),
+        node('Open the fridge or cupboard'),
+        node('Choose one thing that sounds okay'),
+      ]),
+      node('Eat the food', [
+        node('Take one bite'),
+        node('Eat as much as you can'),
+      ]),
+    ])},
+    { title: 'Open the curtains', root: node('Open the curtains', [
+      node('Go to the window', [
+        node('Stand up when you are ready'),
+        node('Walk to the window'),
+      ]),
+      node('Open the curtains', [
+        node('Reach for the curtains'),
+        node('Open the curtains'),
+      ]),
+    ])},
+    { title: 'Turn on the lamp', root: node('Turn on the lamp', [
+      node('Go to the lamp', [
+        node('Stand up when you are ready'),
+        node('Walk to the lamp'),
+      ]),
+      node('Turn the lamp on', [
+        node('Reach for the lamp switch'),
+        node('Turn on the lamp'),
+      ]),
+    ])},
+  ];
+
+  function getNode(task, path) {
+    if (!path || path.length === 0) return task.root;
+    var n = task.root;
+    for (var i = 0; i < path.length; i++) n = n.children[path[i]];
+    return n;
+  }
+  function getStepLabel(task, path) { return getNode(task, path).label; }
+  function hasSmaller(task, path) { var n = getNode(task, path); return n.children && n.children.length > 0; }
+  function getSmallerPath(task, path) { return hasSmaller(task, path) ? path.concat(0) : null; }
+  function hasBigger(task, path) { return path && path.length > 0; }
+  function getBiggerPath(task, path) { return hasBigger(task, path) ? path.slice(0, -1) : null; }
+  function getNextPath(task, path) {
+    var n = getNode(task, path);
+    if (n.children && n.children.length > 0) return path.concat(0);
+    var parentPath = path.slice(0, -1), lastIdx = path[path.length - 1];
+    var parent = parentPath.length === 0 ? task.root : getNode(task, parentPath);
+    if (lastIdx + 1 < parent.children.length) return parentPath.concat(lastIdx + 1);
+    if (parentPath.length === 0) return null;
+    return getNextPath(task, parentPath);
+  }
+
+  function getNextRowPath(task, path) {
+    var root = task.root;
+    if (path.length === 0) return root.children.length > 0 ? [0] : null;
+    if (path.length === 1) {
+      var i = path[0];
+      if (i + 1 < root.children.length) return [i + 1];
+      return null;
+    }
+    var i = path[0], j = path[1];
+    var main = root.children[i];
+    var subTasks = main.children && main.children.length > 0 ? main.children : [];
+    var nextJ = j + 1;
+    var nextI = i;
+    if (nextJ >= subTasks.length) {
+      nextI = i + 1;
+      nextJ = 0;
+      if (nextI >= root.children.length) return null;
+      main = root.children[nextI];
+      subTasks = main.children && main.children.length > 0 ? main.children : [];
+    }
+    var depth = path.length;
+    if (depth === 2) {
+      if (subTasks[nextJ] && subTasks[nextJ].children && subTasks[nextJ].children.length > 0) return [nextI, nextJ, 0];
+      return [nextI, nextJ];
+    }
+    if (subTasks[nextJ] && subTasks[nextJ].children && subTasks[nextJ].children.length > 0) return [nextI, nextJ, 0];
+    return [nextI, nextJ];
+  }
+  function getFirstPath(energy) {
+    if (energy >= 5) return [];
+    if (energy >= 4) return [0];
+    if (energy >= 2 || energy == null) return [0, 0];
+    var task = TASKS[currentTaskIndex];
+    if (!task) return [0, 0];
+    var root = task.root;
+    for (var i = 0; i < root.children.length; i++) {
+      var b = root.children[i];
+      if (!b.children || b.children.length === 0) continue;
+      for (var j = 0; j < b.children.length; j++) {
+        var c = b.children[j];
+        if (c.children && c.children.length > 0) return [i, j, 0];
+      }
+    }
+    return [0, 0];
+  }
+
+  function getCompletedToday() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      const all = JSON.parse(raw);
+      const today = new Date().toDateString();
+      return all.filter(function (item) { return new Date(item.completedAt).toDateString() === today; });
+    } catch (_) { return []; }
+  }
+
+  function saveCompleted(item) {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const all = raw ? JSON.parse(raw) : [];
+    all.push(item);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  }
+
+  function getList() { return localStorage.getItem(LIST_KEY) || ''; }
+  function setList(s) { localStorage.setItem(LIST_KEY, s); }
+
+  const listScreen = document.getElementById('list-screen');
+  const chunkScreen = document.getElementById('chunk-screen');
+  const taskCompleteScreen = document.getElementById('task-complete-screen');
+  const winsScreen = document.getElementById('wins-screen');
+  const listForm = document.getElementById('list-form');
+  const listInput = document.getElementById('list-input');
+  const energyBtns = document.getElementById('energy-btns');
+  const chunkText = document.getElementById('chunk-text');
+  const rewardBox = document.getElementById('reward-box');
+  const noMoreBox = document.getElementById('no-more-box');
+  const linkWins = document.getElementById('link-wins');
+  const linkNewList = document.getElementById('link-new-list');
+  const backToList = document.getElementById('back-to-list');
+
+  var energy = null;
+  var currentTaskIndex = 0;
+  var currentPath = [];
+  var taskCompleteTransitioning = false;
+  var stepThemeIndex = 0;
+  var stepNumber = 1;
+
+  function show(screen) {
+    listScreen.classList.remove('active');
+    chunkScreen.classList.remove('active');
+    taskCompleteScreen.classList.remove('active');
+    winsScreen.classList.remove('active');
+    screen.classList.add('active');
+  }
+
+  function currentTask() { return TASKS[currentTaskIndex]; }
+
+  function pathMatches(a, b) {
+    if (!a || !b || a.length !== b.length) return false;
+    for (var i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+    return true;
+  }
+
+  function renderTreeDebug() {
+    var el = document.getElementById('tree-debug');
+    if (currentTaskIndex >= TASKS.length) {
+      el.innerHTML = '<span class="tree-title">(No task – all done)</span>';
+      return;
+    }
+    var task = currentTask();
+    var root = task.root;
+    el.innerHTML = '';
+    var table = document.createElement('table');
+    table.className = 'tree-table';
+    var thead = document.createElement('thead');
+    thead.innerHTML = '<tr><th class="tree-cell-a">Task</th><th class="tree-cell-b">Big steps</th><th class="tree-cell-c">Medium steps</th><th class="tree-cell-d">Small steps</th></tr>';
+    table.appendChild(thead);
+    var tbody = document.createElement('tbody');
+    var totalRows = 0;
+    for (var i = 0; i < root.children.length; i++) {
+      var subTasks = root.children[i].children && root.children[i].children.length > 0 ? root.children[i].children : [];
+      totalRows += subTasks.length || 1;
+    }
+    var taskNameRowed = false;
+    for (var i = 0; i < root.children.length; i++) {
+      var main = root.children[i];
+      var subTasks = main.children && main.children.length > 0 ? main.children : [];
+      var rowCount = subTasks.length || 1;
+      for (var j = 0; j < rowCount; j++) {
+        var tr = document.createElement('tr');
+        if (!taskNameRowed) {
+          var tdTask = document.createElement('td');
+          tdTask.className = 'tree-cell-a';
+          tdTask.textContent = task.title;
+          tdTask.setAttribute('rowspan', totalRows);
+          if (pathMatches([], currentPath)) tdTask.classList.add('tree-current');
+          tr.appendChild(tdTask);
+          taskNameRowed = true;
+        }
+        if (j === 0) {
+          var tdB = document.createElement('td');
+          tdB.className = 'tree-cell-b';
+          tdB.textContent = (i + 1) + '. ' + main.label;
+          if (pathMatches([i], currentPath)) tdB.classList.add('tree-current');
+          if (rowCount > 1) tdB.setAttribute('rowspan', rowCount);
+          tr.appendChild(tdB);
+        }
+        var tdC = document.createElement('td');
+        tdC.className = 'tree-cell-c';
+        if (subTasks.length > 0) {
+          tdC.textContent = (j + 1) + '. ' + subTasks[j].label;
+          if (pathMatches([i, j], currentPath)) tdC.classList.add('tree-current');
+        } else {
+          tdC.textContent = '—';
+        }
+        tr.appendChild(tdC);
+        var tdD = document.createElement('td');
+        tdD.className = 'tree-cell-d';
+        if (subTasks.length > 0) {
+          var sub = subTasks[j];
+          var subSub = sub.children && sub.children.length > 0 ? sub.children : [];
+          if (subSub.length > 0) {
+            for (var k = 0; k < subSub.length; k++) {
+              var line = document.createElement('div');
+              line.textContent = (k + 1) + '. ' + subSub[k].label;
+              if (pathMatches([i, j, k], currentPath)) line.classList.add('tree-current');
+              tdD.appendChild(line);
+            }
+          } else {
+            tdD.textContent = '—';
+          }
+        } else {
+          tdD.textContent = '—';
+        }
+        tr.appendChild(tdD);
+        tbody.appendChild(tr);
+      }
+    }
+    table.appendChild(tbody);
+    el.appendChild(table);
+  }
+
+  function jumpToTask(index) {
+    currentTaskIndex = index;
+    currentPath = getFirstPath(energy);
+    showStep();
+  }
+
+  var todoListMenuOpen = false;
+  function renderDebugTaskMenu() {
+    var el = document.getElementById('debug-task-menu');
+    el.innerHTML = '';
+    el.classList.toggle('is-open', todoListMenuOpen);
+    var toggle = document.createElement('a');
+    toggle.href = '#';
+    toggle.className = 'debug-task-menu-toggle';
+    toggle.setAttribute('role', 'button');
+    toggle.textContent = 'To-do list ' + (todoListMenuOpen ? '\u2304\u2304' : '\u2303\u2303');
+    toggle.addEventListener('click', function (e) {
+      e.preventDefault();
+      todoListMenuOpen = !todoListMenuOpen;
+      el.classList.toggle('is-open', todoListMenuOpen);
+      list.style.display = todoListMenuOpen ? 'block' : 'none';
+      toggle.textContent = 'To-do list ' + (todoListMenuOpen ? '\u2304\u2304' : '\u2303\u2303');
+    });
+    el.appendChild(toggle);
+    var list = document.createElement('div');
+    list.className = 'debug-task-list';
+    list.style.display = todoListMenuOpen ? 'block' : 'none';
+    for (var idx = 0; idx < TASKS.length; idx++) {
+      var a = document.createElement('a');
+      a.href = '#';
+      var numSpan = document.createElement('span');
+      numSpan.className = 'task-num';
+      numSpan.textContent = (idx + 1) + '. ';
+      var titleSpan = document.createElement('span');
+      titleSpan.className = 'task-title';
+      titleSpan.textContent = TASKS[idx].title;
+      a.appendChild(numSpan);
+      a.appendChild(titleSpan);
+      a.addEventListener('click', (function (i) { return function (e) { e.preventDefault(); jumpToTask(i); }; })(idx));
+      list.appendChild(a);
+    }
+    var resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'debug-reset-btn';
+    resetBtn.textContent = 'Reset';
+    resetBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(LIST_KEY);
+      localStorage.removeItem(DEBUG_TABLE_KEY);
+      localStorage.removeItem(STEP_HINT_SEEN_KEY);
+      location.reload();
+    });
+    list.appendChild(resetBtn);
+    el.appendChild(list);
+  }
+
+  function showStep() {
+    taskCompleteTransitioning = false;
+    document.body.setAttribute('data-theme', (stepThemeIndex % 5).toString());
+    stepThemeIndex++;
+    var task = currentTask();
+    var label = getStepLabel(task, currentPath);
+    var canBigger = hasBigger(task, currentPath);
+    var canSmaller = hasSmaller(task, currentPath);
+    document.getElementById('chunk-task-title').textContent = task.title;
+    document.getElementById('chunk-step-label').textContent = canBigger ? 'Step ' + stepNumber : 'JFDI';
+    chunkText.textContent = label;
+    rewardBox.style.display = 'none';
+    noMoreBox.style.display = 'none';
+    var taskCompleteCheckbox = document.getElementById('task-complete-checkbox');
+    if (taskCompleteCheckbox) taskCompleteCheckbox.checked = false;
+    var biggerBtn = document.getElementById('btn-bigger');
+    var smallerBtn = document.getElementById('btn-smaller');
+    var nextStepBtn = document.getElementById('btn-next-step');
+    var taskCompleteBtn = document.getElementById('btn-task-complete');
+    var hasNextStep = getNextRowPath(task, currentPath) !== null;
+    biggerBtn.disabled = !canBigger;
+    biggerBtn.style.opacity = canBigger ? '1' : '0.5';
+    smallerBtn.disabled = !canSmaller;
+    smallerBtn.style.opacity = canSmaller ? '1' : '0.5';
+    nextStepBtn.style.display = '';
+    nextStepBtn.textContent = hasNextStep ? 'I did it!' : 'Click to complete the task!';
+    nextStepBtn.classList.toggle('is-complete-task', !hasNextStep);
+    var chunkTextHint = document.getElementById('chunk-text-hint');
+    if (chunkTextHint) chunkTextHint.style.display = canBigger ? 'none' : '';
+    var stepDoneHint = document.getElementById('step-done-hint');
+    if (stepDoneHint) stepDoneHint.style.display = localStorage.getItem(STEP_HINT_SEEN_KEY) ? 'none' : 'block';
+    var angle = Math.floor(Math.random() * 360);
+    var stops = [];
+    for (var i = 0; i < 5; i++) {
+      var h = Math.floor(Math.random() * 360);
+      var s = 55 + Math.floor(Math.random() * 25);
+      var l = 80 + Math.floor(Math.random() * 15);
+      stops.push('hsl(' + h + ',' + s + '%,' + l + '%)');
+    }
+    nextStepBtn.style.background = 'linear-gradient(' + angle + 'deg, ' + stops.join(', ') + ')';
+    taskCompleteBtn.style.display = '';
+    taskCompleteBtn.classList.remove('completed-clicked');
+    taskCompleteBtn.classList.toggle('btn-primary', !hasNextStep);
+    taskCompleteBtn.classList.toggle('btn-secondary', hasNextStep);
+    renderDebugTaskMenu();
+    renderTreeDebug();
+  }
+
+  function moveToNextTask() {
+    currentTaskIndex++;
+    stepNumber = 1;
+    if (currentTaskIndex >= TASKS.length) {
+      noMoreBox.style.display = 'block';
+      renderTreeDebug();
+      return;
+    }
+    currentPath = getFirstPath(energy);
+    showStep();
+  }
+
+  function showRewardThenNext(goToNextTask) {
+    var task = currentTask();
+    var label = getStepLabel(task, currentPath);
+    saveCompleted({ title: label, completedAt: new Date().toISOString() });
+    if (goToNextTask) {
+      showTaskCompleteSuccess(task.title);
+    } else {
+      var nextPath = getNextRowPath(task, currentPath);
+      if (nextPath) {
+        currentPath = nextPath;
+        showStep();
+      } else {
+        moveToNextTask();
+      }
+    }
+  }
+
+  function showTaskCompleteSuccess(completedTaskTitle) {
+    var nextIndex = currentTaskIndex + 1;
+    var hasNext = nextIndex < TASKS.length;
+    var nextTask = hasNext ? TASKS[nextIndex] : null;
+    document.getElementById('task-complete-title').textContent = completedTaskTitle;
+    document.getElementById('task-complete-task-title').textContent = completedTaskTitle;
+    if (hasNext) {
+      document.getElementById('task-complete-all-done').style.display = 'none';
+      var nextBtn = document.getElementById('btn-next-task');
+      nextBtn.textContent = 'Next: ' + nextTask.title;
+      nextBtn.style.display = 'inline-block';
+      document.getElementById('btn-task-complete-wins').style.display = 'none';
+    } else {
+      document.getElementById('task-complete-all-done').style.display = 'block';
+      document.getElementById('btn-next-task').style.display = 'none';
+      document.getElementById('btn-task-complete-wins').style.display = 'inline-block';
+    }
+    show(taskCompleteScreen);
+  }
+
+  listInput.addEventListener('click', function () {
+    if (listInput.value.trim() === '') {
+      listInput.value = TASKS.map(function (t) { return t.title.toLowerCase(); }).join(', ');
+    }
+  });
+
+  listForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var list = listInput.value.trim();
+    if (!list) return;
+    setList(list);
+    currentTaskIndex = 0;
+    stepNumber = 1;
+    currentPath = getFirstPath(energy);
+    showStep();
+    show(chunkScreen);
+  });
+
+  energyBtns.addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-energy]');
+    if (!btn) return;
+    energyBtns.querySelectorAll('button').forEach(function (b) { b.classList.remove('selected'); });
+    btn.classList.add('selected');
+    energy = parseInt(btn.dataset.energy, 10);
+  });
+
+  document.getElementById('btn-bigger').addEventListener('click', function () {
+    var task = currentTask();
+    var biggerPath = getBiggerPath(task, currentPath);
+    if (biggerPath) { currentPath = biggerPath; showStep(); }
+  });
+
+  document.getElementById('btn-smaller').addEventListener('click', function () {
+    var task = currentTask();
+    var smallerPath = getSmallerPath(task, currentPath);
+    if (smallerPath) { currentPath = smallerPath; showStep(); }
+  });
+
+  document.getElementById('btn-next-step').addEventListener('click', function () {
+    localStorage.setItem(STEP_HINT_SEEN_KEY, 'true');
+    var task = currentTask();
+    var hasNext = getNextRowPath(task, currentPath) !== null;
+    if (hasNext) {
+      stepNumber++;
+      showRewardThenNext(false);
+      requestAnimationFrame(function () {
+        var nextStepBtn = document.getElementById('btn-next-step');
+        fireHeartsFromDoneButton(nextStepBtn);
+      });
+    } else {
+      var checkbox = document.getElementById('task-complete-checkbox');
+      checkbox.checked = true;
+      var nextStepBtn = document.getElementById('btn-next-step');
+      document.getElementById('btn-task-complete').classList.add('completed-clicked');
+      if (taskCompleteTransitioning) return;
+      taskCompleteTransitioning = true;
+      fireConfetti(function () {
+        showRewardThenNext(true);
+        taskCompleteTransitioning = false;
+      }, nextStepBtn);
+    }
+  });
+
+  function fireConfetti(done, originEl) {
+    var colors = ['#4a7c59', '#e8f0ea', '#f0c674', '#b294bb', '#81a2be', '#cc6666', '#de935f', '#8abeb7'];
+    var wrap = document.createElement('div');
+    wrap.className = 'confetti-wrap';
+    var rect = originEl ? originEl.getBoundingClientRect() : null;
+    var originX = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+    var originY = rect ? rect.top + rect.height / 2 : 80;
+    var gravity = 0.35;
+    var decay = 0.98;
+    var count = 140;
+    var particles = [];
+    for (var i = 0; i < count; i++) {
+      var angle = (Math.random() - 0.5) * Math.PI * 0.9;
+      var speed = 8 + Math.random() * 14;
+      var vx = Math.sin(angle) * speed * (Math.random() > 0.5 ? 1 : -1);
+      var vy = -Math.cos(angle) * speed - 4;
+      var p = document.createElement('div');
+      p.className = 'confetti-piece';
+      p.style.left = originX + 'px';
+      p.style.top = originY + 'px';
+      p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      p.style.width = (8 + Math.random() * 10) + 'px';
+      p.style.height = (8 + Math.random() * 10) + 'px';
+      if (Math.random() > 0.5) p.style.borderRadius = '50%';
+      wrap.appendChild(p);
+      particles.push({ el: p, x: originX, y: originY, vx: vx, vy: vy, rot: Math.random() * 360, rotSpeed: (Math.random() - 0.5) * 12 });
+    }
+    document.body.appendChild(wrap);
+    var startTime = Date.now();
+    var maxDuration = 4500;
+    function tick() {
+      var now = Date.now();
+      if (now - startTime > maxDuration) {
+        wrap.remove();
+        if (done) done();
+        return;
+      }
+      var allOffScreen = true;
+      for (var i = 0; i < particles.length; i++) {
+        var pt = particles[i];
+        pt.x += pt.vx;
+        pt.y += pt.vy;
+        pt.vy += gravity;
+        pt.vx *= decay;
+        pt.vy *= decay;
+        pt.rot += pt.rotSpeed;
+        if (pt.y < window.innerHeight + 50) allOffScreen = false;
+        pt.el.style.left = pt.x + 'px';
+        pt.el.style.top = pt.y + 'px';
+        pt.el.style.transform = 'translate(-50%, -50%) rotate(' + pt.rot + 'deg)';
+      }
+      if (allOffScreen) {
+        wrap.remove();
+        if (done) done();
+        return;
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function fireHeartsFromDoneButton(originEl) {
+    if (!originEl) return;
+    var rect = originEl.getBoundingClientRect();
+    var originX = rect.left + rect.width / 2;
+    var originY = rect.top;
+    var wrap = document.createElement('div');
+    wrap.className = 'hearts-wrap';
+    var heartChars = ['\u2665', '\u2764', '\u2661'];
+    var colors = ['#e63946', '#f4a261', '#e76f51', '#d62828', '#ff6b6b'];
+    var gravity = 0.2;
+    var decay = 0.99;
+    var count = 28;
+    var particles = [];
+    for (var i = 0; i < count; i++) {
+      var angle = (Math.random() - 0.5) * Math.PI * 0.9;
+      var speed = 2.5 + Math.random() * 5;
+      var vx = Math.sin(angle) * speed * (Math.random() > 0.5 ? 1 : -1);
+      var vy = -Math.cos(angle) * speed - 2;
+      var p = document.createElement('span');
+      p.className = 'heart-piece';
+      p.textContent = heartChars[i % heartChars.length];
+      p.style.color = colors[i % colors.length];
+      p.style.fontSize = (12 + Math.random() * 10) + 'px';
+      p.style.left = originX + 'px';
+      p.style.top = originY + 'px';
+      wrap.appendChild(p);
+      particles.push({
+        el: p,
+        x: originX,
+        y: originY,
+        vx: vx,
+        vy: vy,
+        rot: Math.random() * 360,
+        rotSpeed: (Math.random() - 0.5) * 8
+      });
+    }
+    document.body.appendChild(wrap);
+    var startTime = Date.now();
+    var maxDuration = 3500;
+    function tick() {
+      var now = Date.now();
+      if (now - startTime > maxDuration) {
+        wrap.remove();
+        return;
+      }
+      var allOffScreen = true;
+      for (var i = 0; i < particles.length; i++) {
+        var pt = particles[i];
+        pt.x += pt.vx;
+        pt.y += pt.vy;
+        pt.vy += gravity;
+        pt.vx *= decay;
+        pt.vy *= decay;
+        pt.rot += pt.rotSpeed;
+        if (pt.y < window.innerHeight + 50) allOffScreen = false;
+        pt.el.style.left = pt.x + 'px';
+        pt.el.style.top = pt.y + 'px';
+        pt.el.style.transform = 'translate(-50%, -50%) rotate(' + pt.rot + 'deg)';
+      }
+      if (allOffScreen) {
+        wrap.remove();
+        return;
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  document.getElementById('btn-task-complete').addEventListener('click', function (e) {
+    e.preventDefault();
+    var checkbox = document.getElementById('task-complete-checkbox');
+    checkbox.checked = true;
+    var btn = document.getElementById('btn-task-complete');
+    btn.classList.add('completed-clicked');
+    if (taskCompleteTransitioning) return;
+    taskCompleteTransitioning = true;
+    fireConfetti(function () {
+      showRewardThenNext(true);
+      taskCompleteTransitioning = false;
+    }, btn);
+  });
+
+  document.getElementById('btn-next-task').addEventListener('click', function () {
+    show(chunkScreen);
+    moveToNextTask();
+  });
+
+  document.getElementById('btn-task-complete-wins').addEventListener('click', function () {
+    showWins();
+  });
+
+  linkWins.addEventListener('click', function (e) { e.preventDefault(); showWins(); });
+  linkNewList.addEventListener('click', function (e) { e.preventDefault(); document.body.setAttribute('data-theme', Math.floor(Math.random() * 5).toString()); show(listScreen); listInput.value = getList(); });
+  backToList.addEventListener('click', function (e) { e.preventDefault(); document.body.setAttribute('data-theme', Math.floor(Math.random() * 5).toString()); show(listScreen); listInput.value = getList(); });
+
+  var DEBUG_TABLE_KEY = 'tinystepsapp-debug-table-visible';
+  function getDebugTableVisible() {
+    var stored = localStorage.getItem(DEBUG_TABLE_KEY);
+    return stored === null ? false : stored === 'true';
+  }
+  function setDebugTableVisible(visible) {
+    localStorage.setItem(DEBUG_TABLE_KEY, visible ? 'true' : 'false');
+  }
+  function applyDebugTableState() {
+    var visible = getDebugTableVisible();
+    document.getElementById('tree-debug').style.display = visible ? '' : 'none';
+    document.getElementById('debug-table-toggle').textContent = visible ? 'Hide debug table' : 'Show debug table';
+  }
+  applyDebugTableState();
+  document.getElementById('debug-table-toggle').addEventListener('click', function (e) {
+    e.preventDefault();
+    var visible = getDebugTableVisible();
+    setDebugTableVisible(!visible);
+    applyDebugTableState();
+  });
+
+  function showWins() {
+    var completed = getCompletedToday();
+    document.getElementById('wins-count').textContent = completed.length === 0
+      ? 'No steps completed yet today.'
+      : completed.length + ' small ' + (completed.length === 1 ? 'step' : 'steps') + ' completed today.';
+    var listEl = document.getElementById('wins-list');
+    listEl.innerHTML = '';
+    completed.forEach(function (item) {
+      var li = document.createElement('li');
+      li.textContent = item.title;
+      listEl.appendChild(li);
+    });
+    show(winsScreen);
+  }
+
+  document.getElementById('back-from-wins').addEventListener('click', function (e) {
+    e.preventDefault();
+    show(chunkScreen);
+  });
+
+  listInput.value = getList();
+  if (listScreen.classList.contains('active')) {
+    document.body.setAttribute('data-theme', Math.floor(Math.random() * 5).toString());
+  }
+})();</script>
+</body>
+</html>
